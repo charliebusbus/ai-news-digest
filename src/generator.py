@@ -37,11 +37,12 @@ def _get_archive_entries() -> list[dict]:
 def _article_html(article: dict) -> str:
     """Render a single article card."""
     summary = article.get("ai_summary", article.get("summary", ""))
+    title = article.get("title_es", article["title"])
     return f"""
         <article class="card">
             <div class="card-source">{article['source']}</div>
             <h2 class="card-title">
-                <a href="{article['link']}" target="_blank" rel="noopener">{article['title']}</a>
+                <a href="{article['link']}" target="_blank" rel="noopener">{title}</a>
             </h2>
             <p class="card-summary">{summary}</p>
             <div class="card-meta">

@@ -45,15 +45,17 @@ def _get_clients() -> list:
     return clients
 
 
-def summarize_article(title: str, snippet: str, clients: list) -> str:
-    """Generate a 2-3 sentence summary in Spanish, rotating through API keys on failure."""
+def summarize_article(title: str, snippet: str, clients: list) -> dict:
+    """Generate translated title + summary in Spanish, rotating through API keys on failure."""
     if not clients:
-        return snippet
+        return {"title_es": title, "summary_es": snippet}
 
     prompt = (
-        f"Resume la siguiente noticia de tecnologia/IA en 2-3 frases concisas EN ESPANOL. "
-        f"Solo devuelve el resumen, sin introducciones ni comentarios.\n\n"
-        f"Titulo: {title}\n"
+        f"Traduce el titulo y resume la siguiente noticia de tecnologia/IA EN ESPANOL.\n"
+        f"Responde EXACTAMENTE con este formato (sin nada mas):\n"
+        f"TITULO: <titulo traducido al espanol>\n"
+        f"RESUMEN: <resumen de 2-3 frases en espanol>\n\n"
+        f"Titulo original: {title}\n"
         f"Contenido: {snippet}"
     )
 
@@ -63,27 +65,64 @@ def summarize_article(title: str, snippet: str, clients: list) -> str:
                 model=GROQ_MODEL,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.3,
-                max_tokens=300,
+                max_tokens=400,
             )
-            summary = response.choices[0].message.content.strip()
+            text = response.choices[0].message.content.strip()
+            result = _parse_response(text, title, snippet)
             logger.info(f"  Summarized (key {i+1}): {title[:50]}...")
-            return summary
+            return result
         except Exception as e:
             logger.warning(f"Groq key {i+1} failed for '{title[:40]}': {e}")
             continue
 
-    logger.warning(f"All Groq keys exhausted for '{title[:40]}'. Using snippet fallback.")
-    return snippet
+    logger.warning(f"All Groq keys exhausted for '{title[:40]}'. Using fallback.")
+    return {"title_es": title, "summary_es": snippet}
+
+
+def _parse_response(text: str, original_title: str, fallback_summary: str) -> dict:
+    """Parse the TITULO: / RESUMEN: format from Groq response."""
+    title_es = original_title
+    summary_es = fallback_summary
+
+    lines = text.split("\n")
+    titulo_lines = []
+    resumen_lines = []
+    current = None
+
+    for line in lines:
+        upper = line.strip().upper()
+        if upper.startswith("TITULO:") or upper.startswith("TÍTULO:"):
+            current = "titulo"
+            # Get content after the label on the same line
+            after = line.split(":", 1)[1].strip() if ":" in line else ""
+            if after:
+                titulo_lines.append(after)
+        elif upper.startswith("RESUMEN:"):
+            current = "resumen"
+            after = line.split(":", 1)[1].strip() if ":" in line else ""
+            if after:
+                resumen_lines.append(after)
+        elif current == "titulo":
+            titulo_lines.append(line.strip())
+        elif current == "resumen":
+            resumen_lines.append(line.strip())
+
+    if titulo_lines:
+        title_es = " ".join(titulo_lines).strip()
+    if resumen_lines:
+        summary_es = " ".join(resumen_lines).strip()
+
+    return {"title_es": title_es, "summary_es": summary_es}
 
 
 def summarize_all(articles: list[dict]) -> list[dict]:
-    """Add AI-generated summaries to all articles."""
+    """Add AI-generated summaries and translated titles to all articles."""
     clients = _get_clients()
 
     for i, article in enumerate(articles):
-        article["ai_summary"] = summarize_article(
-            article["title"], article["summary"], clients
-        )
+        result = summarize_article(article["title"], article["summary"], clients)
+        article["title_es"] = result["title_es"]
+        article["ai_summary"] = result["summary_es"]
         if clients and i < len(articles) - 1:
             time.sleep(1)
 
