@@ -1,4 +1,11 @@
-"""Summarize articles using Groq API (llama-3.3-70b-versatile)."""
+"""Summarize articles using Groq API (llama-3.3-70b-versatile).
+
+Supports multiple API keys for fallback. Set env vars:
+  GROQ_API_KEY   - primary key
+  GROQ_API_KEY_2 - first fallback
+  GROQ_API_KEY_3 - second fallback
+  ... up to GROQ_API_KEY_9
+"""
 
 import logging
 import os
@@ -9,23 +16,38 @@ logger = logging.getLogger(__name__)
 GROQ_MODEL = "llama-3.3-70b-versatile"
 
 
-def _get_client():
-    """Create Groq client. Returns None if API key is not set."""
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key:
-        logger.warning("GROQ_API_KEY not set. Using RSS snippets as fallback.")
-        return None
-    try:
-        from groq import Groq
-        return Groq(api_key=api_key)
-    except Exception as e:
-        logger.error(f"Failed to create Groq client: {e}")
-        return None
+def _get_clients() -> list:
+    """Create Groq clients from all available API keys."""
+    from groq import Groq
+
+    keys = []
+    # Primary key
+    primary = os.environ.get("GROQ_API_KEY")
+    if primary:
+        keys.append(primary)
+    # Fallback keys: GROQ_API_KEY_2 through GROQ_API_KEY_9
+    for i in range(2, 10):
+        key = os.environ.get(f"GROQ_API_KEY_{i}")
+        if key:
+            keys.append(key)
+
+    if not keys:
+        logger.warning("No GROQ_API_KEY found. Using RSS snippets as fallback.")
+        return []
+
+    logger.info(f"Loaded {len(keys)} Groq API key(s)")
+    clients = []
+    for key in keys:
+        try:
+            clients.append(Groq(api_key=key))
+        except Exception as e:
+            logger.warning(f"Failed to create Groq client: {e}")
+    return clients
 
 
-def summarize_article(title: str, snippet: str, client=None) -> str:
-    """Generate a 2-3 sentence summary in Spanish using Groq."""
-    if client is None:
+def summarize_article(title: str, snippet: str, clients: list) -> str:
+    """Generate a 2-3 sentence summary in Spanish, rotating through API keys on failure."""
+    if not clients:
         return snippet
 
     prompt = (
@@ -35,32 +57,34 @@ def summarize_article(title: str, snippet: str, client=None) -> str:
         f"Contenido: {snippet}"
     )
 
-    try:
-        response = client.chat.completions.create(
-            model=GROQ_MODEL,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
-            max_tokens=300,
-        )
-        summary = response.choices[0].message.content.strip()
-        logger.info(f"  Summarized: {title[:50]}...")
-        return summary
+    for i, client in enumerate(clients):
+        try:
+            response = client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+                max_tokens=300,
+            )
+            summary = response.choices[0].message.content.strip()
+            logger.info(f"  Summarized (key {i+1}): {title[:50]}...")
+            return summary
+        except Exception as e:
+            logger.warning(f"Groq key {i+1} failed for '{title[:40]}': {e}")
+            continue
 
-    except Exception as e:
-        logger.warning(f"Groq API error for '{title[:40]}': {e}. Using snippet fallback.")
-        return snippet
+    logger.warning(f"All Groq keys exhausted for '{title[:40]}'. Using snippet fallback.")
+    return snippet
 
 
 def summarize_all(articles: list[dict]) -> list[dict]:
     """Add AI-generated summaries to all articles."""
-    client = _get_client()
+    clients = _get_clients()
 
     for i, article in enumerate(articles):
         article["ai_summary"] = summarize_article(
-            article["title"], article["summary"], client
+            article["title"], article["summary"], clients
         )
-        # Small delay between requests to respect rate limits
-        if client and i < len(articles) - 1:
+        if clients and i < len(articles) - 1:
             time.sleep(1)
 
     return articles
