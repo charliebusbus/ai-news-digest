@@ -1,12 +1,10 @@
-# AI News Digest
+# Pulso IA
 
-[![AI News Digest](https://github.com/charliebusbus/ai-news-digest/actions/workflows/daily-digest.yml/badge.svg)](https://github.com/charliebusbus/ai-news-digest/actions/workflows/daily-digest.yml)
+[![Pulso IA](https://github.com/charliebusbus/ai-news-digest/actions/workflows/daily-digest.yml/badge.svg)](https://github.com/charliebusbus/ai-news-digest/actions/workflows/daily-digest.yml)
 
-An autonomous AI agent that curates and summarizes the most relevant AI news every day. It fetches articles from top tech RSS feeds, filters them by relevance, generates summaries in Spanish using Groq's LLaMA 3.3 70B model, and publishes a clean static website — all with zero human intervention.
+El pulso diario de la inteligencia artificial. Un agente autonomo que recopila, filtra y resume las noticias de IA mas relevantes cada dia usando Groq (LLaMA 3.3 70B), y publica una web estatica — sin intervencion humana.
 
-**[View the live digest](https://charliebusbus.github.io/ai-news-digest/)**
-
-![AI News Digest Screenshot](docs/screenshot-placeholder.png)
+**[Ver el digest en vivo](https://charliebusbus.github.io/ai-news-digest/)**
 
 ---
 
@@ -34,7 +32,7 @@ Runs automatically every day at 08:00 UTC via GitHub Actions.
 1. Fork this repo
 2. Add your `GROQ_API_KEY` as a repository secret (Settings > Secrets > Actions)
 3. Enable GitHub Pages (Settings > Pages > Source: main, folder: /docs)
-4. Run the workflow manually to test (Actions > AI News Digest > Run workflow)
+4. Run the workflow manually to test (Actions > Pulso IA > Run workflow)
 
 ### Customize feeds
 

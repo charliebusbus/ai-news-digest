@@ -1,4 +1,4 @@
-"""Generate static HTML pages for the AI News Digest."""
+"""Generate static HTML pages for the Pulso IA."""
 
 import logging
 import os
@@ -85,11 +85,11 @@ def _page_html(articles: list[dict], date_str: str, archive_entries: list[dict],
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AI News Digest - Resumen diario de noticias de IA generado automaticamente">
-    <meta property="og:title" content="AI News Digest - {date_str}">
+    <meta name="description" content="Pulso IA - Resumen diario de noticias de IA generado automaticamente">
+    <meta property="og:title" content="Pulso IA - {date_str}">
     <meta property="og:description" content="Las noticias mas relevantes de IA, resumidas automaticamente cada dia.">
     <meta property="og:type" content="website">
-    <title>AI News Digest - {date_str}</title>
+    <title>Pulso IA - {date_str}</title>
     <link rel="stylesheet" href="{css_path}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -111,7 +111,7 @@ def _page_html(articles: list[dict], date_str: str, archive_entries: list[dict],
                         </svg>
                     </div>
                     <div>
-                        <h1>AI News Digest</h1>
+                        <h1>Pulso IA</h1>
                         <p class="subtitle">{date_str}</p>
                     </div>
                 </div>

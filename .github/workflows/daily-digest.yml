@@ -1,4 +1,4 @@
-name: AI News Digest
+name: Pulso IA
 
 on:
   schedule:
@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run AI News Digest
+      - name: Run Pulso IA
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
@@ -39,5 +39,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/
           DATE=$(date -u +%Y-%m-%d)
-          git diff --staged --quiet || git commit -m "AI News Digest - $DATE"
+          git diff --staged --quiet || git commit -m "Pulso IA - $DATE"
           git push

@@ -1,4 +1,4 @@
-"""AI News Digest - Main entry point."""
+"""Pulso IA - Main entry point."""
 
 import logging
 import sys
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def main():
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    logger.info(f"=== AI News Digest - {today} ===")
+    logger.info(f"=== Pulso IA - {today} ===")
 
     # Step 1: Fetch and filter articles
     logger.info("Step 1: Fetching RSS feeds...")
