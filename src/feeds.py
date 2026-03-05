@@ -135,10 +135,28 @@ def fetch_articles(max_articles: int = 10) -> list[Article]:
             logger.error(f"Error fetching {name}: {e}")
             continue
 
-    # Sort by relevance score (descending), then by source diversity
+    # Sort by relevance score (descending)
     all_articles.sort(key=lambda a: a["score"], reverse=True)
 
-    # Take top N
-    selected = all_articles[:max_articles]
+    # Round-robin selection to ensure source diversity
+    selected: list[Article] = []
+    by_source: dict[str, list[Article]] = {}
+    for a in all_articles:
+        by_source.setdefault(a["source"], []).append(a)
+
+    source_names = list(by_source.keys())
+    idx = 0
+    while len(selected) < max_articles and any(by_source.values()):
+        source = source_names[idx % len(source_names)]
+        if by_source[source]:
+            selected.append(by_source[source].pop(0))
+        idx += 1
+        # Remove exhausted sources
+        source_names = [s for s in source_names if by_source[s]]
+        if not source_names:
+            break
+
     logger.info(f"Selected {len(selected)} articles from {len(all_articles)} candidates")
+    sources_used = set(a["source"] for a in selected)
+    logger.info(f"Sources represented: {', '.join(sources_used)}")
     return selected
